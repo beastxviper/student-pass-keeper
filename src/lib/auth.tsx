@@ -57,24 +57,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signUp = async (email: string, password: string, userRole: UserRole, metadata?: Record<string, string>) => {
+    if (userRole === 'student' && metadata) {
+      // Use edge function to create student with auto-confirmed email
+      const { data, error } = await supabase.functions.invoke('create-student', {
+        body: {
+          email,
+          password,
+          login_number: metadata.login_number,
+          full_name: metadata.full_name,
+        },
+      });
+      if (error) return { error: error as Error };
+      if (data?.error) return { error: new Error(data.error) };
+      return { error: null };
+    }
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: { data: { ...metadata, role: userRole } },
     });
     if (error) return { error: error as Error };
-    
-    if (data.user) {
-      await (supabase as any).from('user_roles').insert({ user_id: data.user.id, role: userRole });
-      
-      if (userRole === 'student' && metadata) {
-        await (supabase as any).from('profiles').insert({
-          user_id: data.user.id,
-          login_number: metadata.login_number,
-          full_name: metadata.full_name,
-        });
-      }
-    }
     return { error: null };
   };
 
