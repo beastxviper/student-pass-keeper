@@ -14,16 +14,178 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      applications: {
+        Row: {
+          address_proof_url: string | null
+          class: string
+          created_at: string
+          date_of_birth: string | null
+          department: string
+          destination: string
+          id: string
+          issue_date: string
+          name: string
+          remarks: string | null
+          reviewed_by: string | null
+          status: string
+          student_id: string
+          time_period: string
+          updated_at: string
+          voucher_number: string | null
+          year: string
+        }
+        Insert: {
+          address_proof_url?: string | null
+          class: string
+          created_at?: string
+          date_of_birth?: string | null
+          department: string
+          destination: string
+          id?: string
+          issue_date?: string
+          name: string
+          remarks?: string | null
+          reviewed_by?: string | null
+          status?: string
+          student_id: string
+          time_period: string
+          updated_at?: string
+          voucher_number?: string | null
+          year: string
+        }
+        Update: {
+          address_proof_url?: string | null
+          class?: string
+          created_at?: string
+          date_of_birth?: string | null
+          department?: string
+          destination?: string
+          id?: string
+          issue_date?: string
+          name?: string
+          remarks?: string | null
+          reviewed_by?: string | null
+          status?: string
+          student_id?: string
+          time_period?: string
+          updated_at?: string
+          voucher_number?: string | null
+          year?: string
+        }
+        Relationships: []
+      }
+      clerks: {
+        Row: {
+          clerk_id: string
+          created_at: string
+          full_name: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          clerk_id: string
+          created_at?: string
+          full_name: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          clerk_id?: string
+          created_at?: string
+          full_name?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          read: boolean
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          read?: boolean
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          read?: boolean
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          full_name: string | null
+          id: string
+          login_number: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          login_number?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          login_number?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_role: { Args: { _user_id: string }; Returns: string }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "clerk" | "student"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +312,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "clerk", "student"],
+    },
   },
 } as const
