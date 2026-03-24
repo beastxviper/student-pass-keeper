@@ -22,12 +22,12 @@ export function NotificationsPanel({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     if (!user) return;
     const fetchNotifications = async () => {
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from('notifications')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
-        .limit(20) as any;
+        .limit(20);
       setNotifications(data || []);
       setLoading(false);
     };
@@ -35,7 +35,7 @@ export function NotificationsPanel({ onClose }: { onClose: () => void }) {
   }, [user]);
 
   const markAsRead = async (id: string) => {
-    await supabase.from('notifications').update({ is_read: true } as any).eq('id', id) as any;
+    await (supabase as any).from('notifications').update({ is_read: true }).eq('id', id);
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
   };
 

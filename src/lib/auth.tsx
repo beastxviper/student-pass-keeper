@@ -23,7 +23,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const fetchRole = async (userId: string) => {
-    const { data } = await supabase.rpc('get_user_role', { _user_id: userId });
+    const { data } = await (supabase as any).rpc('get_user_role', { _user_id: userId });
     setRole(data as UserRole | null);
   };
 
@@ -56,24 +56,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: error as Error | null };
   };
 
-  const signUp = async (email: string, password: string, role: UserRole, metadata?: Record<string, string>) => {
+  const signUp = async (email: string, password: string, userRole: UserRole, metadata?: Record<string, string>) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { ...metadata, role } },
+      options: { data: { ...metadata, role: userRole } },
     });
     if (error) return { error: error as Error };
     
     if (data.user) {
-      // Insert role
-      await supabase.from('user_roles').insert({ user_id: data.user.id, role } as any);
+      await (supabase as any).from('user_roles').insert({ user_id: data.user.id, role: userRole });
       
-      if (role === 'student' && metadata) {
-        await supabase.from('profiles').insert({
+      if (userRole === 'student' && metadata) {
+        await (supabase as any).from('profiles').insert({
           user_id: data.user.id,
           login_number: metadata.login_number,
           full_name: metadata.full_name,
-        } as any);
+        });
       }
     }
     return { error: null };

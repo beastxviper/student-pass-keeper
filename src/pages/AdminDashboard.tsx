@@ -41,28 +41,26 @@ interface Clerk {
 }
 
 export default function AdminDashboard() {
-  const { user, signUp } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('analytics');
   const [applications, setApplications] = useState<Application[]>([]);
   const [clerks, setClerks] = useState<Clerk[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Add clerk form
   const [newClerkId, setNewClerkId] = useState('');
   const [newClerkName, setNewClerkName] = useState('');
   const [newClerkPassword, setNewClerkPassword] = useState('');
   const [addingClerk, setAddingClerk] = useState(false);
 
-  // Review dialog
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
   const [adminRemarks, setAdminRemarks] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
 
   const fetchData = async () => {
     const [appsRes, clerksRes] = await Promise.all([
-      supabase.from('applications').select('*').order('created_at', { ascending: false }) as any,
-      supabase.from('clerks').select('*').order('created_at', { ascending: false }) as any,
+      (supabase as any).from('applications').select('*').order('created_at', { ascending: false }),
+      (supabase as any).from('clerks').select('*').order('created_at', { ascending: false }),
     ]);
     setApplications(appsRes.data || []);
     setClerks(clerksRes.data || []);
@@ -76,10 +74,7 @@ export default function AdminDashboard() {
     setAddingClerk(true);
     const email = `${newClerkId}@clerk.pass`;
 
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password: newClerkPassword,
-    });
+    const { data, error } = await supabase.auth.signUp({ email, password: newClerkPassword });
 
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
@@ -88,14 +83,12 @@ export default function AdminDashboard() {
     }
 
     if (data.user) {
-      // We need to insert role and clerk record via admin
-      // Since we can't use the new user's session, we insert directly
-      await supabase.from('user_roles').insert({ user_id: data.user.id, role: 'clerk' } as any) as any;
-      await supabase.from('clerks').insert({
+      await (supabase as any).from('user_roles').insert({ user_id: data.user.id, role: 'clerk' });
+      await (supabase as any).from('clerks').insert({
         user_id: data.user.id,
         clerk_id: newClerkId,
         full_name: newClerkName,
-      } as any) as any;
+      });
     }
 
     toast({ title: 'Clerk added!', description: `${newClerkName} (${newClerkId}) has been added.` });
@@ -105,7 +98,7 @@ export default function AdminDashboard() {
   };
 
   const handleRemoveClerk = async (clerk: Clerk) => {
-    await supabase.from('clerks').update({ is_active: false } as any).eq('id', clerk.id) as any;
+    await (supabase as any).from('clerks').update({ is_active: false }).eq('id', clerk.id);
     toast({ title: 'Clerk deactivated', description: `${clerk.full_name} has been deactivated.` });
     fetchData();
   };
@@ -114,19 +107,19 @@ export default function AdminDashboard() {
     if (!selectedApp || !user) return;
     setActionLoading(true);
 
-    await supabase.from('applications').update({
+    await (supabase as any).from('applications').update({
       status,
       admin_remarks: adminRemarks,
       reviewed_by: user.id,
       reviewed_at: new Date().toISOString(),
-    } as any).eq('id', selectedApp.id) as any;
+    }).eq('id', selectedApp.id);
 
-    await supabase.from('notifications').insert({
+    await (supabase as any).from('notifications').insert({
       user_id: selectedApp.student_id,
       title: `Application ${status} (Admin)`,
       message: `Your application to ${selectedApp.destination} was ${status} by admin.${adminRemarks ? ` Remarks: ${adminRemarks}` : ''}`,
       application_id: selectedApp.id,
-    } as any) as any;
+    });
 
     toast({ title: `Application ${status}` });
     setSelectedApp(null);
@@ -185,9 +178,7 @@ export default function AdminDashboard() {
               ))}
             </div>
             <Card className="glass-card">
-              <CardHeader>
-                <CardTitle>Active Clerks</CardTitle>
-              </CardHeader>
+              <CardHeader><CardTitle>Active Clerks</CardTitle></CardHeader>
               <CardContent>
                 <p className="text-3xl font-display font-bold text-foreground">{clerks.filter(c => c.is_active).length}</p>
                 <p className="text-sm text-muted-foreground">Currently managing applications</p>
@@ -212,15 +203,11 @@ export default function AdminDashboard() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <h3 className="font-semibold text-foreground">{app.full_name}</h3>
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${statusColor(app.status)}`}>
-                            {app.status}
-                          </span>
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${statusColor(app.status)}`}>{app.status}</span>
                         </div>
                         <p className="text-sm text-muted-foreground">{app.department} · {app.destination}</p>
                       </div>
-                      <Button variant="outline" size="sm" className="gap-1.5 shrink-0">
-                        <Eye className="h-4 w-4" /> Review
-                      </Button>
+                      <Button variant="outline" size="sm" className="gap-1.5 shrink-0"><Eye className="h-4 w-4" /> Review</Button>
                     </CardContent>
                   </Card>
                 ))}
@@ -278,12 +265,9 @@ export default function AdminDashboard() {
           </TabsContent>
         </Tabs>
 
-        {/* Admin Review Dialog */}
         <Dialog open={!!selectedApp} onOpenChange={(open) => { if (!open) setSelectedApp(null); }}>
           <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Admin Review</DialogTitle>
-            </DialogHeader>
+            <DialogHeader><DialogTitle>Admin Review</DialogTitle></DialogHeader>
             {selectedApp && (
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-3 text-sm">
@@ -304,7 +288,6 @@ export default function AdminDashboard() {
                     </div>
                   ))}
                 </div>
-
                 <div className="space-y-2">
                   <Label>Admin Remarks</Label>
                   <Textarea value={adminRemarks} onChange={(e) => setAdminRemarks(e.target.value)} placeholder="Add admin remarks..." />

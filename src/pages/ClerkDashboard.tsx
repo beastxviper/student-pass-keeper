@@ -3,16 +3,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Loader2, CheckCircle2, XCircle, Eye, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { format } from 'date-fns';
 
 interface Application {
   id: string;
@@ -44,10 +41,10 @@ export default function ClerkDashboard() {
   const [actionLoading, setActionLoading] = useState(false);
 
   const fetchApplications = async () => {
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from('applications')
       .select('*')
-      .order('created_at', { ascending: false }) as any;
+      .order('created_at', { ascending: false });
     setApplications(data || []);
     setLoading(false);
   };
@@ -60,24 +57,23 @@ export default function ClerkDashboard() {
     if (!selectedApp || !user) return;
     setActionLoading(true);
 
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('applications')
       .update({
         status,
         clerk_remarks: remarks,
         reviewed_by: user.id,
         reviewed_at: new Date().toISOString(),
-      } as any)
-      .eq('id', selectedApp.id) as any;
+      })
+      .eq('id', selectedApp.id);
 
     if (!error) {
-      // Create notification for student
-      await supabase.from('notifications').insert({
+      await (supabase as any).from('notifications').insert({
         user_id: selectedApp.student_id,
         title: `Application ${status}`,
         message: `Your pass application to ${selectedApp.destination} has been ${status}.${remarks ? ` Remarks: ${remarks}` : ''}`,
         application_id: selectedApp.id,
-      } as any) as any;
+      });
 
       toast({ title: `Application ${status}`, description: `Successfully ${status} the application.` });
       setSelectedApp(null);
@@ -107,7 +103,6 @@ export default function ClerkDashboard() {
   return (
     <DashboardLayout title="Clerk Portal" roleLabel="Clerk">
       <div className="max-w-5xl mx-auto space-y-6">
-        {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
             { label: 'Total', count: counts.all, color: 'bg-primary/10 text-primary' },
@@ -124,7 +119,6 @@ export default function ClerkDashboard() {
           ))}
         </div>
 
-        {/* Filter tabs */}
         <Tabs value={filter} onValueChange={setFilter}>
           <TabsList>
             <TabsTrigger value="all">All ({counts.all})</TabsTrigger>
@@ -134,7 +128,6 @@ export default function ClerkDashboard() {
           </TabsList>
         </Tabs>
 
-        {/* Applications list */}
         {loading ? (
           <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
         ) : filtered.length === 0 ? (
@@ -156,9 +149,7 @@ export default function ClerkDashboard() {
                         {app.status}
                       </span>
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      {app.department} · {app.year} · {app.destination}
-                    </p>
+                    <p className="text-sm text-muted-foreground">{app.department} · {app.year} · {app.destination}</p>
                   </div>
                   <Button variant="outline" size="sm" className="gap-1.5 shrink-0">
                     <Eye className="h-4 w-4" /> Review
@@ -169,7 +160,6 @@ export default function ClerkDashboard() {
           </div>
         )}
 
-        {/* Review Dialog */}
         <Dialog open={!!selectedApp} onOpenChange={(open) => { if (!open) setSelectedApp(null); }}>
           <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>

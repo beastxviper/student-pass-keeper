@@ -5,11 +5,9 @@ import { DashboardLayout } from '@/components/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Plus, FileText, Upload } from 'lucide-react';
+import { Loader2, Plus, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -37,7 +35,6 @@ export default function StudentDashboard() {
   const [loading, setLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(true);
 
-  // Form state
   const [fullName, setFullName] = useState('');
   const [department, setDepartment] = useState('');
   const [year, setYear] = useState('');
@@ -51,18 +48,16 @@ export default function StudentDashboard() {
 
   const fetchApplications = async () => {
     if (!user) return;
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from('applications')
       .select('*')
       .eq('student_id', user.id)
-      .order('created_at', { ascending: false }) as any;
+      .order('created_at', { ascending: false });
     setApplications(data || []);
     setFetchLoading(false);
   };
 
-  useEffect(() => {
-    fetchApplications();
-  }, [user]);
+  useEffect(() => { fetchApplications(); }, [user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,7 +78,7 @@ export default function StudentDashboard() {
       addressProofUrl = urlData.publicUrl;
     }
 
-    const { error } = await supabase.from('applications').insert({
+    const { error } = await (supabase as any).from('applications').insert({
       student_id: user.id,
       full_name: fullName,
       department,
@@ -95,7 +90,7 @@ export default function StudentDashboard() {
       destination,
       voucher_number: voucherNumber || null,
       address_proof_url: addressProofUrl || null,
-    } as any) as any;
+    });
 
     if (error) {
       toast({ title: 'Submission failed', description: error.message, variant: 'destructive' });
@@ -189,9 +184,7 @@ export default function StudentDashboard() {
                 </div>
                 <div className="space-y-2">
                   <Label>Address Proof</Label>
-                  <div className="relative">
-                    <Input type="file" accept="image/*,.pdf" onChange={(e) => setAddressProof(e.target.files?.[0] || null)} className="file:mr-3 file:rounded-md file:border-0 file:bg-primary/10 file:text-primary file:text-sm" />
-                  </div>
+                  <Input type="file" accept="image/*,.pdf" onChange={(e) => setAddressProof(e.target.files?.[0] || null)} className="file:mr-3 file:rounded-md file:border-0 file:bg-primary/10 file:text-primary file:text-sm" />
                 </div>
                 <div className="md:col-span-2 flex gap-3 justify-end pt-2">
                   <Button type="button" variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
@@ -206,9 +199,7 @@ export default function StudentDashboard() {
         )}
 
         {fetchLoading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
+          <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
         ) : applications.length === 0 ? (
           <Card className="glass-card">
             <CardContent className="flex flex-col items-center justify-center py-12">
@@ -230,12 +221,8 @@ export default function StudentDashboard() {
                           {app.status}
                         </span>
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        {app.department} · {app.year} · {app.class} · {app.time_period}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Submitted {formatDistanceToNow(new Date(app.created_at), { addSuffix: true })}
-                      </p>
+                      <p className="text-sm text-muted-foreground">{app.department} · {app.year} · {app.class} · {app.time_period}</p>
+                      <p className="text-xs text-muted-foreground mt-1">Submitted {formatDistanceToNow(new Date(app.created_at), { addSuffix: true })}</p>
                     </div>
                     {(app.clerk_remarks || app.admin_remarks) && (
                       <div className="text-sm bg-muted/50 rounded-lg p-2 max-w-xs">
